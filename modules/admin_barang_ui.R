@@ -17,9 +17,11 @@ admin_barang_ui <- function(ns) {
                            actionButton(ns("admin_add_assembler"), "Tambah Data Assembler", class = "btn-success")
                        ),
                        box(title = "Data Assembler (Edit Langsung)", status = "primary", solidHeader = TRUE, width = 12,
-                           helpText("Klik dua kali pada sel untuk mengedit. Tekan Enter untuk menyimpan."),
+                           helpText("Klik dua kali pada sel untuk mengedit. Tekan Enter untuk menyimpan. Pilih satu baris untuk opsi lainnya."),
                            DT::dataTableOutput(ns("admin_assembler_crud_table")),
-                           actionButton(ns("admin_delete_assembler"), "Hapus Data Terpilih", class = "btn-danger", style = "margin-top: 10px;") # Tombol Hapus
+                           # Placeholder for reprint button
+                           uiOutput(ns("assembler_reprint_ui")),
+                           actionButton(ns("admin_delete_assembler"), "Hapus Data Terpilih", class = "btn-danger", style = "margin-top: 10px;")
                        )
                      )
             ),
@@ -35,7 +37,7 @@ admin_barang_ui <- function(ns) {
                        box(title = "Data Tester (Edit Langsung)", status = "primary", solidHeader = TRUE, width = 12,
                            helpText("Klik dua kali pada sel untuk mengedit. Tekan Enter untuk menyimpan."),
                            DT::dataTableOutput(ns("admin_tester_crud_table")),
-                           actionButton(ns("admin_delete_tester"), "Hapus Data Terpilih", class = "btn-danger", style = "margin-top: 10px;") # Tombol Hapus
+                           actionButton(ns("admin_delete_tester"), "Hapus Data Terpilih", class = "btn-danger", style = "margin-top: 10px;")
                        )
                      )
             ),
@@ -49,13 +51,14 @@ admin_barang_ui <- function(ns) {
                            actionButton(ns("admin_add_packager"), "Tambah Data Packager", class = "btn-success")
                        ),
                        box(title = "Data Packager (Edit Langsung)", status = "primary", solidHeader = TRUE, width = 12,
-                           helpText("Klik dua kali pada sel untuk mengedit. Tekan Enter untuk menyimpan."),
+                           helpText("Klik dua kali pada sel untuk mengedit. Tekan Enter untuk menyimpan. Pilih satu baris untuk opsi lainnya."),
                            DT::dataTableOutput(ns("admin_packager_crud_table")),
-                           actionButton(ns("admin_delete_packager"), "Hapus Data Terpilih", class = "btn-danger", style = "margin-top: 10px;") # Tombol Hapus
+                           # Placeholder for reprint button
+                           uiOutput(ns("packager_reprint_ui")),
+                           actionButton(ns("admin_delete_packager"), "Hapus Data Terpilih", class = "btn-danger", style = "margin-top: 10px;")
                        )
                      )
             )
           )
   )
 }
-

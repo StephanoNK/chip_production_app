@@ -8,15 +8,15 @@ DB_NAME <- Sys.getenv("PG_DBNAME", "chip_production_db")
 DB_USER <- Sys.getenv("PG_USER", "shiny_user")
 DB_PASSWORD <- Sys.getenv("PG_PASSWORD") # IMPORTANT: No default password
 
-# Function to create a database connection
+# Function to create a database connection pool
 get_db_conn <- function() {
   # Check if the password is provided
   if (is.null(DB_PASSWORD) || DB_PASSWORD == "") {
     stop("Database password is not set. Please set the PG_PASSWORD environment variable.")
   }
   
-  DBI::dbConnect(
-    RPostgres::Postgres(),
+  pool::dbPool(
+    drv = RPostgres::Postgres(),
     host = DB_HOST,
     port = DB_PORT,
     dbname = DB_NAME,

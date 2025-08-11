@@ -1,8 +1,8 @@
 # server.R
 
 server <- function(input, output, session) {
-  # Create a database connection at the beginning of the Shiny session
-  conn <- tryCatch({
+  # Create a database connection pool at the beginning of the Shiny session
+  pool <- tryCatch({
     get_db_conn()
   }, error = function(e) {
     showModal(modalDialog(
@@ -15,27 +15,27 @@ server <- function(input, output, session) {
   })
   
   # Stop the app if the connection failed
-  if (is.null(conn)) {
+  if (is.null(pool)) {
     return()
   }
   
-  # Ensure the connection is disconnected when the Shiny session ends
+  # Ensure the connection pool is closed when the Shiny session ends
   onStop(function() {
-    if (!is.null(conn) && DBI::dbIsValid(conn)) {
-      DBI::dbDisconnect(conn)
-      message("Database connection closed.")
+    if (!is.null(pool)) {
+      poolClose(pool)
+      message("Database connection pool closed.")
     }
   })
   
   # Reactive value to store user role
   user_role <- reactiveVal(NULL)
   
-  # Initialize reactive_data and load initial data from the DB
+  # Initialize reactive_data and load initial data from the DB using the pool
   reactive_data <- reactiveValues(
-    akun = read_and_convert_table(conn, "akun"),
-    assembler = read_and_convert_table(conn, "assembler", c("tanggal_start", "tanggal_stop")),
-    tester = read_and_convert_table(conn, "tester", c("tanggal_testing")),
-    packager = read_and_convert_table(conn, "packager", c("tanggal_packaging"))
+    akun = read_and_convert_table(pool, "akun"),
+    assembler = read_and_convert_table(pool, "assembler", c("tanggal_start", "tanggal_stop")),
+    tester = read_and_convert_table(pool, "tester", c("tanggal_testing")),
+    packager = read_and_convert_table(pool, "packager", c("tanggal_packaging"))
   )
   
   # Reactive value to store the start time of the assembly process
@@ -60,8 +60,9 @@ server <- function(input, output, session) {
       shinyjs::show("logout_btn")
       
       session$userData$email_logged_in <- email
+      toastr_success(paste("Welcome", user_info$role, email), position = "top-right")
     } else {
-      showModal(modalDialog("Invalid email or password. Please try again.", easyClose = TRUE))
+      toastr_error("Invalid email or password. Please try again.", position = "top-center")
     }
   })
   
@@ -75,7 +76,7 @@ server <- function(input, output, session) {
     updateTextInput(session, "email", value = "")
     updateTextInput(session, "password", value = "")
     session$userData$email_logged_in <- NULL # Clear logged in email
-    showModal(modalDialog("You have been successfully logged out.", easyClose = TRUE))
+    toastr_info("You have been successfully logged out.", position = "top-right")
   })
   
   # Render sidebar menu based on user role
@@ -88,7 +89,9 @@ server <- function(input, output, session) {
         menuItem("Admin Dashboard", tabName = "admin_dashboard", icon = icon("user-secret"),
                  menuSubItem("Manage Product Data", tabName = "admin_barang"),
                  menuSubItem("Manage User Accounts", tabName = "admin_akun"),
-                 menuSubItem("Data Analysis", tabName = "admin_analisis"))
+                 menuSubItem("Data Analysis", tabName = "admin_analisis"),
+                 menuSubItem("Debug Tools", tabName = "admin_debug", icon = icon("bug")) 
+        )
       )
     } else {
       sidebarMenu(
@@ -107,6 +110,7 @@ server <- function(input, output, session) {
     admin_barang_ns_func <- NS(session$ns("admin_barang"))
     admin_akun_ns_func <- NS(session$ns("admin_akun"))
     admin_analisis_ns_func <- NS(session$ns("admin_analisis"))
+    admin_debug_ns_func <- NS(session$ns("admin_debug")) 
     
     tabItems(
       tabItem(tabName = "dashboard",
@@ -137,15 +141,17 @@ server <- function(input, output, session) {
       ),
       admin_barang_ui(admin_barang_ns_func),
       admin_akun_ui(admin_akun_ns_func),
-      admin_analisis_ui(admin_analisis_ns_func)
+      admin_analisis_ui(admin_analisis_ns_func),
+      admin_debug_ui(admin_debug_ns_func) 
     )
   })
   
-  # Call server modules
-  data_entry_server("data_entry", reactive_data, conn, assembly_start_timestamp, is_assembly_running)
-  admin_barang_server("admin_barang", reactive_data, conn)
-  admin_akun_server("admin_akun", reactive_data, conn)
+  # Call server modules, passing the connection pool
+  data_entry_server("data_entry", reactive_data, pool, assembly_start_timestamp, is_assembly_running)
+  admin_barang_server("admin_barang", reactive_data, pool)
+  admin_akun_server("admin_akun", reactive_data, pool)
   admin_analisis_server("admin_analisis", reactive_data)
+  admin_debug_server("admin_debug", reactive_data, pool) 
   
   # --- Dashboard Plot ---
   output$role_pie <- renderPlotly({
@@ -191,10 +197,22 @@ server <- function(input, output, session) {
         filter_end_date = input$filter_date[2]
       )
       
-      rmarkdown::render(tempReport, output_file = file,
-                        params = params,
-                        envir = new.env(parent = globalenv())
-      )
+      # Use tryCatch to handle potential rendering errors
+      tryCatch({
+        rmarkdown::render(tempReport, output_file = file,
+                          params = params,
+                          envir = new.env(parent = globalenv())
+        )
+      }, error = function(e) {
+        # If rendering fails, show an error notification to the user
+        toastr_error(
+          title = "Report Generation Failed",
+          message = "Could not generate the PDF report. Please check that LaTeX is installed and that the data filters are valid.",
+          position = "top-center"
+        )
+        # Stop the app from trying to serve a non-existent or incorrect file
+        stop(e)
+      })
     }
   )
 }

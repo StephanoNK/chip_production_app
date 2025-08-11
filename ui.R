@@ -11,11 +11,11 @@ ui <- dashboardPage(
   ),
   dashboardBody(
     useShinyjs(),
-    # Tambahkan pustaka JsBarcode di sini
+    useToastr(), # Initialize shinytoastr
+    # Add JsBarcode library
     tags$head(
       tags$script(src = "https://cdn.jsdelivr.net/npm/jsbarcode@latest/dist/JsBarcode.all.min.js")
     ),
     uiOutput("main_ui")
   )
 )
-

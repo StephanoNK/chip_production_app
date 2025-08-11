@@ -1,6 +1,6 @@
 # modules/data_entry_ui.R
 
-# Fungsi ini sekarang menerima 'user_role' dan 'ns' sebagai argumen
+# This function now receives 'user_role' and 'ns' as arguments
 data_entry_ui <- function(user_role, ns) { 
   
   tabItem(tabName = "entry",
@@ -10,7 +10,9 @@ data_entry_ui <- function(user_role, ns) {
             fluidPage(
               box(
                 title = "Data Assembler", status = "primary", solidHeader = TRUE, width = 12,
-                DT::dataTableOutput(ns("assembler_table")) 
+                helpText("Pilih satu baris untuk opsi cetak ulang."),
+                DT::dataTableOutput(ns("assembler_table")),
+                uiOutput(ns("assembler_reprint_ui")) # Placeholder for reprint button
               ),
               box(
                 title = "Input Data Assembler Baru", status = "warning", solidHeader = TRUE, width = 6,
@@ -24,17 +26,17 @@ data_entry_ui <- function(user_role, ns) {
                 textInput(ns("pic"), "PIC (Person In Charge)"),
                 helpText("Kode Produksi (4 digit urutan + 2 digit bulan + 2 digit tahun) akan otomatis dibuat saat 'Stop Assembly' ditekan.")
               ),
-              box( # Box untuk Barcode telah diperbarui
+              box( # Box for Barcode has been updated
                 title = "Barcode Produk yang Baru Dibuat", status = "info", solidHeader = TRUE, width = 6,
                 helpText(HTML("Barcode (visual) akan muncul di bawah. Gunakan tombol untuk mengunduh format SVG atau ZPL untuk pencetakan label.")),
                 tags$svg(id = ns("barcode_svg_display"), style = "width: 100%; height: 100px;"), # SVG element for JsBarcode
                 fluidRow(
                   column(6, actionButton(ns("download_barcode_js"), "Unduh SVG", style = "width:100%; margin-top: 10px;")),
-                  column(6, downloadButton(ns("download_barcode_zpl"), "Unduh ZPL", style = "width:100%; margin-top: 10px;")) # Tombol Download ZPL Baru
+                  column(6, downloadButton(ns("download_barcode_zpl"), "Unduh ZPL", style = "width:100%; margin-top: 10px;")) # New ZPL Download Button
                 ),
                 fluidRow(
                   column(6, actionButton(ns("print_barcode"), "Cetak Visual", class = "btn-info", style = "width:100%; margin-top: 10px;")),
-                  column(6, actionButton(ns("print_barcode_zpl"), "Cetak ZPL", class = "btn-info", style = "width:100%; margin-top: 10px;")) # Tombol Cetak ZPL Baru
+                  column(6, actionButton(ns("print_barcode_zpl"), "Cetak ZPL", class = "btn-info", style = "width:100%; margin-top: 10px;")) # New ZPL Print Button
                 )
               )
             )
@@ -61,17 +63,17 @@ data_entry_ui <- function(user_role, ns) {
               ),
               box(
                 title = "Input Data Packager Baru", status = "warning", solidHeader = TRUE, width = 6,
-                # Mengganti selectInput dengan pickerInput
+                # Using pickerInput
                 pickerInput(
                   inputId = ns("pack_nos"),
                   label = "Pilih No Produksi (Pilih 5 atau 10 Barang)",
-                  choices = NULL, # Choices akan diatur di server
+                  choices = NULL, # Choices will be set in the server
                   multiple = TRUE,
                   options = pickerOptions(
-                    actionsBox = TRUE, # Menampilkan tombol Select All/Deselect All
-                    liveSearch = TRUE, # Mengaktifkan fitur pencarian
+                    actionsBox = TRUE, # Show Select All/Deselect All buttons
+                    liveSearch = TRUE, # Enable search feature
                     liveSearchPlaceholder = "Cari No Produksi...",
-                    selectedTextFormat = "count > 3", # Menampilkan ringkasan jika lebih dari 3 item dipilih
+                    selectedTextFormat = "count > 3", # Show summary if more than 3 items are selected
                     noneSelectedText = "Tidak ada barang yang dipilih"
                   )
                 ), 
@@ -79,14 +81,15 @@ data_entry_ui <- function(user_role, ns) {
                 textInput(ns("pack_pic"), "PIC (Person In Charge)"),
                 actionButton(ns("submit_package"), "Submit Package", class = "btn-success")
               ),
-              # Menggunakan uiOutput untuk menampilkan QR Code secara dinamis
+              # Using uiOutput to dynamically display QR Code
               uiOutput(ns("qrcode_output_area")), 
               box(
                 title = "Riwayat Paket yang Dibuat", status = "info", solidHeader = TRUE, width = 12,
-                DT::dataTableOutput(ns("packages_created_table"))
+                helpText("Pilih satu baris untuk opsi cetak ulang."),
+                DT::dataTableOutput(ns("packages_created_table")),
+                uiOutput(ns("packager_reprint_ui")) # Placeholder for reprint button
               )
             )
           }
   )
 }
-

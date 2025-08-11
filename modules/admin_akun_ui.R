@@ -10,9 +10,10 @@ admin_akun_ui <- function(ns) {
                 selectInput(ns("admin_akun_role"), "Role", choices = c("Assembler", "Tester", "Packager", "Admin")),
                 actionButton(ns("admin_add_akun"), "Add Account", class = "btn-success")
             ),
-            box(title = "Account Data (Editable)", status = "primary", solidHeader = TRUE, width = 12,
-                helpText("Double-click a cell to edit Role. Press Enter to save. Passwords are not displayed."),
+            box(title = "Account Data", status = "primary", solidHeader = TRUE, width = 12,
+                helpText("Select a row to enable actions."),
                 DT::dataTableOutput(ns("admin_akun_crud_table")),
+                actionButton(ns("admin_edit_akun"), "Edit Selected Account", class = "btn-info", style = "margin-top: 10px;"),
                 actionButton(ns("admin_change_password"), "Change Selected User's Password", class = "btn-warning", style = "margin-top: 10px;"),
                 actionButton(ns("admin_delete_akun"), "Delete Selected Account", class = "btn-danger", style = "margin-top: 10px;")
             )
