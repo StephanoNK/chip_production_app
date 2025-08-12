@@ -11,7 +11,7 @@ admin_akun_server <- function(id, reactive_data, pool) {
     }, editable = FALSE, # Disable direct cell editing
     options = list(pageLength = 10, scrollX = TRUE), selection = 'single')
     
-    # Modal for editing account role
+    # --- Edit Account Modal and Logic ---
     observeEvent(input$admin_edit_akun, {
       selected_row <- input$admin_akun_crud_table_rows_selected
       if (length(selected_row) > 0) {
@@ -45,20 +45,26 @@ admin_akun_server <- function(id, reactive_data, pool) {
       selected_row <- input$admin_akun_crud_table_rows_selected
       email_to_change <- reactive_data$akun$email[selected_row]
       
-      sql_query <- "UPDATE akun SET role = $1 WHERE email = $2"
+      # Use parameterized query for security
+      query <- glue::glue_sql("UPDATE akun SET role = {input$edit_role} WHERE email = {email_to_change}", .con = pool)
+      
       tryCatch({
-        DBI::dbExecute(pool, sql_query, params = list(input$edit_role, email_to_change))
+        DBI::dbExecute(pool, query)
         toastr_success(paste("Role for", email_to_change, "changed successfully."))
         reactive_data$akun <- read_and_convert_table(pool, "akun") # Refresh data
         removeModal()
       }, error = function(e) {
-        toastr_error(paste("Error changing role:", e$message))
+        toastr_error(paste("Error changing role:", e$message), position = "top-center")
       })
     })
     
-    # Add new Akun data
+    # --- Add New Account Logic ---
     observeEvent(input$admin_add_akun, {
-      req(input$admin_akun_email, input$admin_akun_password, input$admin_akun_role)
+      # Validate email format
+      validate(
+        need(grepl(".+@.+\\..+", input$admin_akun_email), "Please enter a valid email address."),
+        need(nchar(input$admin_akun_password) >= 6, "Password must be at least 6 characters long.")
+      )
       
       # Hash the password before storing
       hashed_password <- hash_password(input$admin_akun_password)
@@ -74,15 +80,16 @@ admin_akun_server <- function(id, reactive_data, pool) {
         DBI::dbAppendTable(pool, "akun", new_entry)
         reactive_data$akun <- read_and_convert_table(pool, "akun")
         toastr_success("New account added successfully!")
+        # Clear input fields
         updateTextInput(session, "admin_akun_email", value = "")
         updateTextInput(session, "admin_akun_password", value = "")
         updateSelectInput(session, "admin_akun_role", selected = "Assembler")
       }, error = function(e) {
-        toastr_error(paste("Error adding account:", e$message, "(Email might already exist)."))
+        toastr_error(paste("Error adding account: Email might already exist.", e$message), position = "top-center")
       })
     })
     
-    # Modal for changing password
+    # --- Change Password Modal and Logic ---
     observeEvent(input$admin_change_password, {
       selected_row <- input$admin_akun_crud_table_rows_selected
       if (length(selected_row) > 0) {
@@ -102,22 +109,27 @@ admin_akun_server <- function(id, reactive_data, pool) {
     # Confirm password change
     observeEvent(input$confirm_password_change, {
       req(input$new_password)
+      validate(
+        need(nchar(input$new_password) >= 6, "Password must be at least 6 characters long.")
+      )
       selected_row <- input$admin_akun_crud_table_rows_selected
       email_to_change <- reactive_data$akun$email[selected_row]
       hashed_password <- hash_password(input$new_password)
       
-      sql_query <- "UPDATE akun SET password = $1 WHERE email = $2"
+      # Use parameterized query
+      query <- glue::glue_sql("UPDATE akun SET password = {hashed_password} WHERE email = {email_to_change}", .con = pool)
+      
       tryCatch({
-        DBI::dbExecute(pool, sql_query, params = list(hashed_password, email_to_change))
+        DBI::dbExecute(pool, query)
         toastr_success("Password changed successfully.")
         reactive_data$akun <- read_and_convert_table(pool, "akun") # Refresh data
         removeModal()
       }, error = function(e) {
-        toastr_error(paste("Error changing password:", e$message))
+        toastr_error(paste("Error changing password:", e$message), position = "top-center")
       })
     })
     
-    # Delete Akun data
+    # --- Delete Account Logic ---
     observeEvent(input$admin_delete_akun, {
       selected_row <- input$admin_akun_crud_table_rows_selected
       if (length(selected_row) > 0) {
@@ -129,15 +141,15 @@ admin_akun_server <- function(id, reactive_data, pool) {
           return()
         }
         
-        # Use parameterized query
-        sql_query <- "DELETE FROM akun WHERE email = $1"
+        # Use parameterized query for security
+        query <- glue::glue_sql("DELETE FROM akun WHERE email = {email_to_delete}", .con = pool)
         
         tryCatch({
-          DBI::dbExecute(pool, sql_query, params = list(email_to_delete))
+          DBI::dbExecute(pool, query)
           reactive_data$akun <- read_and_convert_table(pool, "akun")
           toastr_success(paste("Account", email_to_delete, "deleted successfully!"))
         }, error = function(e) {
-          toastr_error(paste("Error deleting account:", e$message))
+          toastr_error(paste("Error deleting account:", e$message), position = "top-center")
         })
       } else {
         toastr_info("Please select an account to delete.", position = "top-center")

@@ -10,7 +10,9 @@ data_entry_ui <- function(user_role, ns) {
             fluidPage(
               box(
                 title = "Data Assembler", status = "primary", solidHeader = TRUE, width = 12,
-                DT::dataTableOutput(ns("assembler_table")) 
+                DT::dataTableOutput(ns("assembler_table")),
+                # ADDED: Placeholder for the reprint button. It will appear here when a row is selected.
+                uiOutput(ns("assembler_reprint_ui"))
               ),
               box(
                 title = "Input Data Assembler Baru", status = "warning", solidHeader = TRUE, width = 6,
@@ -30,11 +32,11 @@ data_entry_ui <- function(user_role, ns) {
                 tags$svg(id = ns("barcode_svg_display"), style = "width: 100%; height: 100px;"), # SVG element for JsBarcode
                 fluidRow(
                   column(6, actionButton(ns("download_barcode_js"), "Unduh SVG", style = "width:100%; margin-top: 10px;")),
-                  column(6, downloadButton(ns("download_barcode_zpl"), "Unduh ZPL", style = "width:100%; margin-top: 10px;")) # Tombol Download ZPL Baru
+                  column(6, downloadButton(ns("download_barcode_zpl"), "Unduh ZPL", style = "width:100%; margin-top: 10px;")) 
                 ),
                 fluidRow(
                   column(6, actionButton(ns("print_barcode"), "Cetak Visual", class = "btn-info", style = "width:100%; margin-top: 10px;")),
-                  column(6, actionButton(ns("print_barcode_zpl"), "Cetak ZPL", class = "btn-info", style = "width:100%; margin-top: 10px;")) # Tombol Cetak ZPL Baru
+                  column(6, actionButton(ns("print_barcode_zpl"), "Cetak ZPL", class = "btn-info", style = "width:100%; margin-top: 10px;"))
                 )
               )
             )
@@ -61,17 +63,16 @@ data_entry_ui <- function(user_role, ns) {
               ),
               box(
                 title = "Input Data Packager Baru", status = "warning", solidHeader = TRUE, width = 6,
-                # Mengganti selectInput dengan pickerInput
                 pickerInput(
                   inputId = ns("pack_nos"),
                   label = "Pilih No Produksi (Pilih 5 atau 10 Barang)",
-                  choices = NULL, # Choices akan diatur di server
+                  choices = NULL, 
                   multiple = TRUE,
                   options = pickerOptions(
-                    actionsBox = TRUE, # Menampilkan tombol Select All/Deselect All
-                    liveSearch = TRUE, # Mengaktifkan fitur pencarian
+                    actionsBox = TRUE, 
+                    liveSearch = TRUE, 
                     liveSearchPlaceholder = "Cari No Produksi...",
-                    selectedTextFormat = "count > 3", # Menampilkan ringkasan jika lebih dari 3 item dipilih
+                    selectedTextFormat = "count > 3",
                     noneSelectedText = "Tidak ada barang yang dipilih"
                   )
                 ), 
@@ -79,11 +80,12 @@ data_entry_ui <- function(user_role, ns) {
                 textInput(ns("pack_pic"), "PIC (Person In Charge)"),
                 actionButton(ns("submit_package"), "Submit Package", class = "btn-success")
               ),
-              # Menggunakan uiOutput untuk menampilkan QR Code secara dinamis
               uiOutput(ns("qrcode_output_area")), 
               box(
                 title = "Riwayat Paket yang Dibuat", status = "info", solidHeader = TRUE, width = 12,
-                DT::dataTableOutput(ns("packages_created_table"))
+                DT::dataTableOutput(ns("packages_created_table")),
+                # ADDED: Placeholder for the reprint button. It will appear here when a row is selected.
+                uiOutput(ns("packager_reprint_ui"))
               )
             )
           }

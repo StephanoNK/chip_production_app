@@ -27,6 +27,9 @@ server <- function(input, output, session) {
     }
   })
   
+  # --- FIX: Hide the logout button on initial app load ---
+  shinyjs::hide("logout_btn")
+  
   # Reactive value to store user role
   user_role <- reactiveVal(NULL)
   
@@ -57,7 +60,7 @@ server <- function(input, output, session) {
       shinyjs::hide("email")
       shinyjs::hide("password")
       shinyjs::hide("login_btn")
-      shinyjs::show("logout_btn")
+      shinyjs::show("logout_btn") # This correctly shows the button after login
       
       session$userData$email_logged_in <- email
       toastr_success(paste("Welcome", user_info$role, email), position = "top-right")
@@ -72,7 +75,7 @@ server <- function(input, output, session) {
     shinyjs::show("email")
     shinyjs::show("password")
     shinyjs::show("login_btn")
-    shinyjs::hide("logout_btn")
+    shinyjs::hide("logout_btn") # This correctly hides the button on logout
     updateTextInput(session, "email", value = "")
     updateTextInput(session, "password", value = "")
     session$userData$email_logged_in <- NULL # Clear logged in email
